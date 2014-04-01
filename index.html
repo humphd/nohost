@@ -2,6 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <link rel="stylesheet" href="styles/dropzone.css" />
     <script data-main="src/main" src="lib/require.js"></script>
   </head>
   <body>
@@ -16,6 +17,9 @@
         <li><code>?install={zipfile url}</code> (e.g., <a href="?install=webmaker-kits-gh-pages.zip">?install=webmaker-kits-gh-pages.zip</a>)
         <li><code>?/{path to file in filesystem}</code> (e.g., <a href="?/webmaker-kits-gh-pages">?/webmaker-kits-gh-pages</a>
       </ul>
+
+      <p>If you wnat to install your own .zip file, select it:<p>
+       <input type="file" accept="application/zip" id="upload"></p>
     </div>
   </body>
 </html>

@@ -27,31 +27,58 @@ function(Filer, Log, Handlers, Content) {
     },
 
     /**
-     * Download an image (*.zip) from the given url into the server's root,
-     * unzip, and install, removing the image file when done.
+     * Download a file (e.g., disk image *.zip) into the server's root.
+     * Both a url and File/Blog are acceptable.
      */
-    install: function(url, callback) {
-      sh.wget(url, function(err, path) {
+    download: function(url, callback) {
+      if(typeof url === 'string') {
+        // Regular url
+        sh.wget(url, function(err, path) {
+          if(err) {
+            Log.error('unable to download filesystem image `' + url + '`');
+            return callback(err);
+          }
+          callback(null, path);
+        });
+      } else {
+        // File/Blob
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          delete reader.onload;
+          var buffer = new Uint8Array(e.target.result);
+          var path = Path.join('/', url.name);
+
+          fs.writeFile(path, buffer, function(err) {
+            if(err) {
+              Log.error('unable to download filesystem image');
+              return callback(err);
+            }
+            callback(null, path);
+          });
+        };
+        reader.readAsArrayBuffer(url);
+      }
+    },
+
+    /**
+     * Unzip and install a disk image (*.zip) in the server's root, removing
+     * the image file when done.
+     */
+    install: function(path, callback) {
+      sh.unzip(path, function(err) {
         if(err) {
-          Log.error('unable to download filesystem image `' + url + '`');
+          Log.error('unable to extract filesystem image');
           return callback(err);
         }
 
-        sh.unzip(path, function(err) {
+        sh.rm(path, function(err) {
           if(err) {
-            Log.error('unable to extract filesystem image');
-            return callback(err);
+            Log.error('unable to remove filesystem image archive `' + path + '`');
+            callback(err);
           }
 
-          sh.rm(path, function(err) {
-            if(err) {
-              Log.error('unable to remove filesystem image archive `' + path + '`');
-              callback(err);
-            }
-
-            Log.info('installed filesystem');
-            callback();
-          });
+          Log.info('installed filesystem');
+          callback();
         });
       });
     },

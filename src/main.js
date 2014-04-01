@@ -12,6 +12,18 @@ requirejs(['filer', 'webserver'], function(Filer, WebServer) {
   function showUI() {
     var ui = document.getElementById('ui');
     ui.style.display = 'block';
+
+    // Listen for user specified zip files to install
+    var upload = document.getElementById('upload');
+    upload.addEventListener('change', function() {
+      var file = this.files[0];
+      WebServer.download(file, function(err, path) {
+        // XXX deal with err
+        WebServer.install(path, function() {
+          window.location = '?/';
+        });
+      });
+    }, false);
   }
 
   /**
@@ -49,10 +61,12 @@ requirejs(['filer', 'webserver'], function(Filer, WebServer) {
         return;
       }
       if(option === 'install') {
-
-        WebServer.install(value, function() {
-          // Show the web root
-          window.location = '?/';
+        WebServer.download(value, function(err, path) {
+          // XXX deal with err
+          WebServer.install(path, function() {
+            // Show the web root
+            window.location = '?/';
+          });
         });
         return;
       }
