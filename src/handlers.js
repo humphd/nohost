@@ -65,7 +65,38 @@ function(Filer, Async, Log, Content) {
         callback();
       },
       function links(callback) {
-        rewriteElements('link', 'href', 'text/css', callback);
+        var elems = doc.querySelectorAll('link');
+
+        Async.eachSeries(elems, function(elem, cb) {
+          // Skip any links for protocols (we only want relative paths)
+          var url = elem.getAttribute('href');;
+          if(!url || /\:?\/\//.test(url) || /\s*data\:/.test(url)) {
+            return cb();
+          }
+
+          var path = Path.resolve(dir, url);
+          fs.exists(path, function(found) {
+            if(!found) {
+              return cb();
+            }
+
+            fs.readFile(path, 'utf8', function(err, data) {
+              if(err) {
+                return cb(err);
+              }
+
+              _processCSS(data, path, fs, function(err, css) {
+                elem.href = Content.toDataURL(data, 'text/css');
+                cb();
+              });
+            });
+          });
+        }, function(err) {
+          if(err) {
+            Log.error(err);
+          }
+          callback();
+        });
       },
       function imgs(callback) {
         rewriteElements('img', 'src', null, callback);
@@ -78,6 +109,62 @@ function(Filer, Async, Log, Content) {
       }
     ], function callback(err, result) {
       document.write(doc.documentElement.innerHTML);
+    });
+  }
+
+  /**
+   * Given a CSS string, rewrite it to include external resources (imports, url())
+   */
+  function _processCSS(css, path, fs, callback) {
+    var dir = Path.basename(path);
+
+    // Do a two stage pass of the css content, replacing all interesting url(...)
+    // uses with the contents of files in the server root.
+    // Thanks to Pomax for helping with this
+    function aggregate(content, callback) {
+      var urls = [];
+
+      function fetch(input, replacements, next) {
+        if(input.length === 0) {
+          return next(false, replacements);
+        }
+
+        var filename = input.splice(0,1)[0];
+        fs.readFile(Path.resolve(dir, filename), 'utf8', function(err, data) {
+          if(err) {
+            return next("failed on " + path, replacements);
+          }
+          // Queue a function to do the replacement in the second pass
+          replacements.push(function() {
+            var mime = Content.mimeFromExt(Path.extname(filename));
+            content.replace(filename, Content.toDataURL(data, mime));
+          });
+          fetch(input, replacements, next);
+        });
+      };
+
+      function fetchFiles(list, next) {
+        fetch(list, [], next);
+      };
+
+      content.replace(/url\(['"]?([^'"\)]+)['"]?\)/g, function(_, url) {
+        if(!url || /\:?\/\//.test(url) || /\s*data\:/.test(url)) {
+          return;
+        }
+        urls.push(url);
+      });
+      fetchFiles(urls, callback);
+    };
+
+    aggregate(css, function(err, replacements) {
+      if(err) {
+        callback(err);
+        return;
+      }
+      replacements.forEach(function(replacement) {
+        replacement();
+      });
+      callback(null, css);
     });
   }
 
