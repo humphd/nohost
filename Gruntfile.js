@@ -1,16 +1,10 @@
 module.exports = function(grunt) {
 
   grunt.initConfig({
-    compress: {
-      main: {
-        options: {
-          archive: 'test.zip',
-          mode: 'zip'
-        },
-        files: [
-          {expand: true, src: ['test/*.*'], dest: './'}
-        ]
-      }
+    clean: ['test.zip'],
+
+    zip: {
+      'test.zip': [ 'test/**/*' ]
     },
 
     jshint: {
@@ -19,7 +13,8 @@ module.exports = function(grunt) {
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-contrib-compress');
+  grunt.loadNpmTasks('grunt-zip');
+  grunt.loadNpmTasks('grunt-contrib-clean');
 
-  grunt.registerTask('default', ['jshint', 'compress']);
+  grunt.registerTask('default', ['jshint', 'clean', 'zip']);
 };
