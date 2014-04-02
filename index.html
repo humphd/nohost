@@ -2,23 +2,60 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <link href="styles/makerstrap.css" rel="stylesheet">
     <script data-main="src/main" src="lib/require.js"></script>
   </head>
   <body>
-    <div id="ui" style="display:none">
-      <h3>Filer bootloader</h3>
-      <p>This page is a bootloader capable of creating a Filer filesystem,
-         installing a zipped archive to that filesystem, and loading files from it.</p>
+    <div id="ui">
+      <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="https://github.com/humphd/nohost"><span class="fa fa-github"></span> humphd/nohost</a></li>
+          </ul>
+        </div>
+      </nav>
 
-      <p>Boot options are passed on the query string. Valid options include:</p>
-      <ul>
-        <li><code>?reset</code (e.g., <a href="?reset">format the current fs (wipe it)</a>
-        <li><code>?install={zipfile url}</code> (e.g., <a href="?install=webmaker-kits-gh-pages.zip">?install=webmaker-kits-gh-pages.zip</a>, <a href="?install=restaurant-gh-pages.zip">?install=restaurant-gh-pages.zip</a>)
-        <li><code>?/{path to file in filesystem}</code> (e.g., <a href="?/webmaker-kits-gh-pages">?/webmaker-kits-gh-pages</a>, <a href="?/restaurant-gh-pages.zip">?/restaurant-gh-pages.zip</a>)
-      </ul>
+      <div class="jumbotron">
+        <div class="container">
+          <h1>nohost</h1>
+          <p>A web server in your web browser</p>
+        </div>
+      </div>
 
-      <p>If you wnat to install your own .zip file, select it:<p>
-       <input type="file" accept="application/zip" id="upload"></p>
+      <div class="container">
+        <h2 class="page-header">Overview</h2>
+        <p>This page is a bootloader for a web-page based web server. It creates a persistent filesystem in your browser
+           (using <a href="https://github.com/js-platform/filer">Filer</a>). This filesystem is then used to host web sites
+           and applications, which are installed from zip archives (e.g., all GitHub repos have a <a href="http://stackoverflow.com/questions/2751227/how-to-download-source-in-zip-format-from-github/18583977#18583977">Download link</a> to create a zip).</p>
+
+        <p>The files in the filesystem can then be served using paths on the query string. The filesystem is shared across
+           all windows using the same origin, which means you can have an application in one tab editing files, and nohost
+           showing you those files in another.</p>
+
+        <h2 class="page-header">Boot Options</h2>
+        <p>Boot options are passed on the query string. Valid options include:</p>
+        <ul>
+          <li><code>?reset</code> (e.g., <a href="?reset">?reset</a> format the current fs, erasing all files)
+          <li><code>?install={zipfile.zip}</code> (e.g., <a href="?install=webmaker-kits-gh-pages.zip">?install=webmaker-kits-gh-pages.zip</a>, <a href="?install=restaurant-gh-pages.zip">?install=restaurant-gh-pages.zip</a>)
+          <li><code>?/{path/to/file/in/filesystem}</code> (e.g., serve the file at a given path, <a href="?/webmaker-kits-gh-pages">?/webmaker-kits-gh-pages</a>, <a href="?/restaurant-gh-pages.zip">?/restaurant-gh-pages</a>)
+        </ul>
+
+        <h2 class="page-header">Installing Files</h2>
+        <p>You can also install your own web site or application via a zip file. Use the button below to find one on your local computer.</p>
+        <p class="alert alert-info">NOTE: no files are ever uploaded to any server. Everything is local to your browser.</p>
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <form role="form">
+              <div class="form-group">
+                <label for="exampleInputFile">File input</label>
+                <input type="file" id="upload" accept="application/zip">
+                <p class="help-block">If you want to install your own .zip file, select one here.</p>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </div>
     </div>
   </body>
 </html>

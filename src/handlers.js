@@ -146,14 +146,17 @@ function(Filer, Async, Log, Content) {
         var elems = doc.querySelectorAll('style');
 
         Async.eachSeries(elems, function(elem, cb) {
-          var content = elem.textContent;
-console.log(elems, elems[0].innerHTML);
+          var content = elem.innerHTML;
           if(!content) {
             cb();
             return;
           }
+
           _processCSS(content, path, fs, function(err, css) {
-            elem.textContent = css;
+            if(err) {
+              Log.error(err);
+            }
+            elem.innerHTML = css;
             cb();
           });
         }, function(err) {
@@ -171,6 +174,12 @@ console.log(elems, elems[0].innerHTML);
       },
       function sources(callback) {
         rewriteElements('source', 'src', null, callback);
+      },
+      function videos(callback) {
+        rewriteElements('video', 'src', null, callback);
+      },
+      function audios(callback) {
+        rewriteElements('audio', 'src', null, callback);
       }
     ], function(err, result) {
       // Return the processed HTML
@@ -182,7 +191,7 @@ console.log(elems, elems[0].innerHTML);
    * Given a CSS string, rewrite it to include external resources (imports, url())
    */
   function _processCSS(css, path, fs, callback) {
-    var dir = Path.basename(path);
+    var dir = Path.dirname(path);
 
     // Do a two stage pass of the css content, replacing all interesting url(...)
     // uses with the contents of files in the server root.
@@ -200,10 +209,13 @@ console.log(elems, elems[0].innerHTML);
           if(err) {
             return next("failed on " + path, replacements);
           }
+
           // Queue a function to do the replacement in the second pass
           replacements.push(function() {
             var mime = Content.mimeFromExt(Path.extname(filename));
-            content.replace(filename, Content.toDataURL(data, mime));
+            var filenameCleaned = filename.replace(/\./g, '\\.').replace(/\//g, '\\/');
+            var regex = new RegExp(filenameCleaned, 'gm');
+            return content.replace(regex, Content.toDataURL(data, mime));
           });
           fetch(input, replacements, next);
         });
@@ -228,8 +240,9 @@ console.log(elems, elems[0].innerHTML);
         return;
       }
       replacements.forEach(function(replacement) {
-        replacement();
+        css = replacement();
       });
+console.log('css', css);
       callback(null, css);
     });
   }
@@ -319,7 +332,7 @@ console.log(elems, elems[0].innerHTML);
         '    outline-width: 0;' +
         '  }' +
         '</style></head><body>' +
-        '<video src="' + path + '"></video></body></html>';
+        '<video src="' + path + '" controls></video></body></html>';
       _processHTML(syntheticDoc, path, fs, function(err, html) {
         if(err) {
           Log.error('unable to read `' + path + '`');
