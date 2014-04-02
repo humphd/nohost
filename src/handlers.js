@@ -7,6 +7,7 @@ function(Filer, Async, Log, Content) {
    * Open, Write to the document stream, and Close.
    */
   function _writeMarkup(markup) {
+    /* jshint evil:true */
     document.open();
     document.write(markup);
     document.close();
@@ -15,7 +16,7 @@ function(Filer, Async, Log, Content) {
   /**
    * Given an HTML string, rewrite it with inline resources
    */
-  function _handleHTML(html, path, fs) {
+  function _processHTML(html, path, fs, callback) {
     var dir = Path.dirname(path);
     var parser = new DOMParser();
     var doc;
@@ -69,7 +70,7 @@ function(Filer, Async, Log, Content) {
             continue;
           }
           elem.href = '?' + Path.join(dir, url);
-        };
+        }
 
         callback();
       },
@@ -78,7 +79,7 @@ function(Filer, Async, Log, Content) {
 
         Async.eachSeries(elems, function(elem, cb) {
           // Skip any links for protocols (we only want relative paths)
-          var url = elem.getAttribute('href');;
+          var url = elem.getAttribute('href');
           if(!url || /\:?\/\//.test(url) || /\s*data\:/.test(url)) {
             return cb();
           }
@@ -107,17 +108,73 @@ function(Filer, Async, Log, Content) {
           callback();
         });
       },
+      function iframes(callback) {
+        var elems = doc.querySelectorAll('iframe');
+
+        Async.eachSeries(elems, function(elem, cb) {
+          // Skip any links for protocols (we only want relative paths)
+          var url = elem.getAttribute('src');
+          if(!url || /\:?\/\//.test(url) || /\s*data\:/.test(url)) {
+            return cb();
+          }
+
+          var path = Path.resolve(dir, url);
+          fs.exists(path, function(found) {
+            if(!found) {
+              return cb();
+            }
+
+            fs.readFile(path, 'utf8', function(err, data) {
+              if(err) {
+                return cb(err);
+              }
+
+              _processHTML(data, path, fs, function(err, html) {
+                elem.src = Content.toDataURL(data, 'text/html');
+                cb();
+              });
+            });
+          });
+        }, function(err) {
+          if(err) {
+            Log.error(err);
+          }
+          callback();
+        });
+      },
+      function styles(callback) {
+        var elems = doc.querySelectorAll('style');
+
+        Async.eachSeries(elems, function(elem, cb) {
+          var content = elem.textContent;
+console.log(elems, elems[0].innerHTML);
+          if(!content) {
+            cb();
+            return;
+          }
+          _processCSS(content, path, fs, function(err, css) {
+            elem.textContent = css;
+            cb();
+          });
+        }, function(err) {
+          if(err) {
+            Log.error(err);
+          }
+          callback();
+        });
+      },
       function imgs(callback) {
         rewriteElements('img', 'src', null, callback);
       },
       function scripts(callback) {
         rewriteElements('script', 'src', 'text/javascript', callback);
       },
-      function iframes(callback) {
-        rewriteElements('iframe', 'src', null, callback);
+      function sources(callback) {
+        rewriteElements('source', 'src', null, callback);
       }
-    ], function callback(err, result) {
-      _writeMarkup(doc.documentElement.innerHTML);
+    ], function(err, result) {
+      // Return the processed HTML
+      callback(null, doc.documentElement.innerHTML);
     });
   }
 
@@ -150,11 +207,11 @@ function(Filer, Async, Log, Content) {
           });
           fetch(input, replacements, next);
         });
-      };
+      }
 
       function fetchFiles(list, next) {
         fetch(list, [], next);
-      };
+      }
 
       content.replace(/url\(['"]?([^'"\)]+)['"]?\)/g, function(_, url) {
         if(!url || /\:?\/\//.test(url) || /\s*data\:/.test(url)) {
@@ -163,7 +220,7 @@ function(Filer, Async, Log, Content) {
         urls.push(url);
       });
       fetchFiles(urls, callback);
-    };
+    }
 
     aggregate(css, function(err, replacements) {
       if(err) {
@@ -223,7 +280,54 @@ function(Filer, Async, Log, Content) {
         '  }'+
         '</style></head><body>' +
         '<img src="' + path + '"></body></html>';
-      _handleHTML(syntheticDoc, path, fs);
+      _processHTML(syntheticDoc, path, fs, function(err, html) {
+        if(err) {
+          Log.error('unable to read `' + path + '`');
+          this.handle404(path);
+          return;
+        }
+        _writeMarkup(html);
+      });
+    },
+
+    /**
+     * Synthesize a document for media
+     */
+    handleMedia: function(path, fs) {
+      var syntheticDoc = '<!DOCTYPE html>' +
+        '<html><head>' +
+        '<title>' + path + '</title>' +
+        '<style>' +
+        '  /* based on http://dxr.mozilla.org/mozilla-central/source/layout/style/TopLevelVideoDocument.css */' +
+        '  body {' +
+        '    height: 100%;' +
+        '    width: 100%;' +
+        '    margin: 0;' +
+        '    padding: 0;' +
+        '  }' +
+        '  video {' +
+        '    position: absolute;' +
+        '    top: 0;' +
+        '    right: 0;' +
+        '    bottom: 0;' +
+        '    left: 0;' +
+        '    margin: auto;' +
+        '    max-width: 100%;' +
+        '    max-height: 100%;' +
+        '  }' +
+        '  video:focus {' +
+        '    outline-width: 0;' +
+        '  }' +
+        '</style></head><body>' +
+        '<video src="' + path + '"></video></body></html>';
+      _processHTML(syntheticDoc, path, fs, function(err, html) {
+        if(err) {
+          Log.error('unable to read `' + path + '`');
+          this.handle404(path);
+          return;
+        }
+        _writeMarkup(html);
+      });
     },
 
     /**
@@ -289,7 +393,7 @@ function(Filer, Async, Log, Content) {
         return '<tr><td valign="top"><img src="' + icon + '" alt="' + alt + '"></td><td>' +
           '<a href="' + href + '">' + name + '</a>             </td>' +
           '<td align="right">' + modified + '  </td>' +
-	        '<td align="right">' + size + '</td><td>&nbsp;</td></tr>';
+          '<td align="right">' + size + '</td><td>&nbsp;</td></tr>';
       }
 
       function processEntries(entries) {
@@ -298,7 +402,7 @@ function(Filer, Async, Log, Content) {
           var name = Path.basename(entry.path);
           var ext = Path.extname(entry.path);
           var href = '?' + Path.join(path, entry.path);
-	        var icon;
+          var icon;
           var alt;
 
           if(entry.type === 'DIRECTORY') {
@@ -315,13 +419,14 @@ function(Filer, Async, Log, Content) {
               break;
             case '.htm':
             case '.html':
+              /* falls through */
             default:
               icon = 'icons/text.png';
               alt = '[TXT]';
               break;
             }
           }
-	        rows += row(icon, alt, href, name, entry.modified, entry.size);
+          rows += row(icon, alt, href, name, entry.modified, entry.size);
         });
 
         _writeMarkup(header + rows + footer);
@@ -347,7 +452,14 @@ function(Filer, Async, Log, Content) {
           return;
         }
 
-        _handleHTML(html, path, fs);
+        _processHTML(html, path, fs, function(err, html) {
+          if(err) {
+            Log.error('unable to read `' + path + '`');
+            this.handle404(path);
+            return;
+          }
+          _writeMarkup(html);
+        });
       });
     }
 

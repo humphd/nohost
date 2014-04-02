@@ -28,7 +28,7 @@ function(Filer, Log, Handlers, Content) {
 
     /**
      * Download a file (e.g., disk image *.zip) into the server's root.
-     * Both a url and File/Blog are acceptable.
+     * Both a url and File/Blob are acceptable.
      */
     download: function(url, callback) {
       if(typeof url === 'string') {
@@ -104,6 +104,8 @@ function(Filer, Log, Handlers, Content) {
 
         if(Content.isImage(ext)) {
           Handlers.handleImage(path, fs);
+        } else if(Content.isMedia(ext)) {
+          Handlers.handleMedia(path, fs);
         } else if(Content.isHTML(ext)) {
           Handlers.handleHTML(path, fs);
         } else {
