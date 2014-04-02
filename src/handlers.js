@@ -242,7 +242,6 @@ function(Filer, Async, Log, Content) {
       replacements.forEach(function(replacement) {
         css = replacement();
       });
-console.log('css', css);
       callback(null, css);
     });
   }
@@ -260,7 +259,7 @@ console.log('css', css);
         '<h1>Not Found</h1>' +
         '<p>The requested URL ' + url + ' was not found on this server.</p>' +
         '<hr>' +
-        '<address>NoHost/0.0.1 (Web) Server</address>' +
+        '<address>nohost/0.0.1 (Web) Server</address>' +
         '</body></html>';
       _writeMarkup(html);
     },
@@ -376,7 +375,7 @@ console.log('css', css);
             '<td align="right">  - </td><td>&nbsp;</td></tr>';
 
       var footer = '<tr><th colspan="5"><hr></th></tr>' +
-            '</table><address>NoHost/0.0.1 (Web)</address>' +
+            '</table><address>nohost/0.0.1 (Web)</address>' +
             '</body></html>';
 
       function formatDate(d) {
@@ -422,21 +421,15 @@ console.log('css', css);
             icon = 'icons/folder.png';
             alt = '[DIR]';
           } else { // file
-            switch(ext) {
-            case '.gif':
-            case '.png':
-            case '.jpg':
-            case '.jpeg':
+            if(Content.isImage(ext)) {
               icon = 'icons/image2.png';
               alt = '[IMG]';
-              break;
-            case '.htm':
-            case '.html':
-              /* falls through */
-            default:
+            } else if(Content.isMedia(ext)) {
+              icon = 'icons/movie.png';
+              alt = '[MOV]';
+            } else {
               icon = 'icons/text.png';
               alt = '[TXT]';
-              break;
             }
           }
           rows += row(icon, alt, href, name, entry.modified, entry.size);
