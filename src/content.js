@@ -19,17 +19,32 @@ define(function() {
     isImage: function(ext) {
       return ext === '.png' ||
         ext === '.jpg' ||
+        ext === '.jpe' ||
         ext === '.pjpg' ||
         ext === '.jpeg'||
-        ext === '.gif';
+        ext === '.gif' ||
+        ext === '.bmp' ||
+        ext === '.ico';
     },
 
     isHTML: function(ext) {
-      return ext === '.html' || ext === '.htm';
+      return ext === '.html' ||
+        ext === '.htm' ||
+        ext === '.htx' ||
+        ext === '.htmls';
     },
 
     mimeFromExt: function(ext) {
       switch(ext) {
+      case '.html':
+      case '.htmls':
+      case '.htm':
+      case '.htx':
+        return 'text/html';
+      case '.ico':
+        return 'image/x-icon';
+      case '.bmp':
+        return 'image/bmp';
       case '.css':
         return 'text/css';
       case '.js':
@@ -41,6 +56,7 @@ define(function() {
       case '.ico':
         return 'image/x-icon';
       case '.jpg':
+      case '.jpe':
       case '.jpeg':
         return 'image/jpeg';
       case '.gif':
