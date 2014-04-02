@@ -3,7 +3,7 @@ nohost
 
 A web server in your web browser.
 
-Running a local web server allows for easier testing and development without the need for a network. The nohost web server takes this a step futher, and allows web sites to be hosted inside the browser without any server or network. 
+Running a local web server allows for easier testing and development without the need for a network. The nohost web server takes this a step futher, and allows web sites to be hosted inside the browser without any server or network.
 
 nohost was created in order to make it easier to do in browser, live previews of complex web sites and applications
 that span many files.

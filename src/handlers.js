@@ -205,16 +205,17 @@ function(Filer, Async, Log, Content) {
         }
 
         var filename = input.splice(0,1)[0];
-        fs.readFile(Path.resolve(dir, filename), 'utf8', function(err, data) {
+        fs.readFile(Path.resolve(dir, filename), function(err, data) {
           if(err) {
             return next("failed on " + path, replacements);
           }
 
           // Queue a function to do the replacement in the second pass
-          replacements.push(function() {
-            var mime = Content.mimeFromExt(Path.extname(filename));
+          replacements.push(function(content) {
+            // Swap the filename with the contents of the file
             var filenameCleaned = filename.replace(/\./g, '\\.').replace(/\//g, '\\/');
             var regex = new RegExp(filenameCleaned, 'gm');
+            var mime = Content.mimeFromExt(Path.extname(filename));
             return content.replace(regex, Content.toDataURL(data, mime));
           });
           fetch(input, replacements, next);
@@ -240,7 +241,7 @@ function(Filer, Async, Log, Content) {
         return;
       }
       replacements.forEach(function(replacement) {
-        css = replacement();
+        css = replacement(css);
       });
       callback(null, css);
     });
