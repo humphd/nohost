@@ -4,6 +4,15 @@ function(Filer, Async, Log, Content) {
   var Path = Filer.Path;
 
   /**
+   * Open, Write to the document stream, and Close.
+   */
+  function _writeMarkup(markup) {
+    document.open();
+    document.write(markup);
+    document.close();
+  }
+
+  /**
    * Given an HTML string, rewrite it with inline resources
    */
   function _handleHTML(html, path, fs) {
@@ -108,7 +117,7 @@ function(Filer, Async, Log, Content) {
         rewriteElements('iframe', 'src', null, callback);
       }
     ], function callback(err, result) {
-      document.write(doc.documentElement.innerHTML);
+      _writeMarkup(doc.documentElement.innerHTML);
     });
   }
 
@@ -183,7 +192,7 @@ function(Filer, Async, Log, Content) {
         '<hr>' +
         '<address>NoHost/0.0.1 (Web) Server</address>' +
         '</body></html>';
-      document.write(html);
+      _writeMarkup(html);
     },
 
     /**
@@ -227,7 +236,7 @@ function(Filer, Async, Log, Content) {
           this.handle404(path);
           return;
         }
-        document.write(data);
+        _writeMarkup(data);
       });
     },
 
@@ -315,7 +324,7 @@ function(Filer, Async, Log, Content) {
 	        rows += row(icon, alt, href, name, entry.modified, entry.size);
         });
 
-        document.write(header + rows + footer);
+        _writeMarkup(header + rows + footer);
       }
 
       sh.ls(path, function(err, list) {
