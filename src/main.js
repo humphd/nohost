@@ -1,7 +1,7 @@
 requirejs.config({
   baseUrl: 'src/',
   paths: {
-    filer: '../lib/filer.min',
+    filer: '../shim/filer.min',
     async: '../lib/async'
   }
 });
