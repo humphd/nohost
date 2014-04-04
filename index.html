@@ -36,8 +36,8 @@
         <p>Boot options are passed on the query string. Valid options include:</p>
         <ul>
           <li><code>?reset</code> (e.g., <a href="?reset">?reset</a> format the current fs, erasing all files)
-          <li><code>?install={zipfile.zip}</code> (e.g., <a href="?install=webmaker-kits-gh-pages.zip">?install=webmaker-kits-gh-pages.zip</a>, <a href="?install=restaurant-gh-pages.zip">?install=restaurant-gh-pages.zip</a>)
-          <li><code>?/{path/to/file/in/filesystem}</code> (e.g., serve the file at a given path, <a href="?/webmaker-kits-gh-pages">?/webmaker-kits-gh-pages</a>, <a href="?/restaurant-gh-pages.zip">?/restaurant-gh-pages</a>)
+          <li><code>?install={zipfile.zip}</code> (e.g., <a href="?install=restaurant-gh-pages.zip">?install=restaurant-gh-pages.zip</a>)
+          <li><code>?/{path/to/file/in/filesystem}</code> (e.g., serve the file at a given path, <a href="?/restaurant-gh-pages.zip">?/restaurant-gh-pages</a>)
         </ul>
 
         <h2 class="page-header">Installing Files</h2>
@@ -54,6 +54,8 @@
             </form>
           </div>
         </div>
+
+        <div id="status" class="alert alert-success" style="display:none"></div>
 
       </div>
     </div>

@@ -9,6 +9,30 @@ requirejs.config({
 requirejs(['filer', 'webserver'], function(Filer, WebServer) {
   var Path = Filer.Path;
 
+  function install(file) {
+    var status = document.getElementById('status');
+    status.innerHTML = "Downloading zip file...";
+    status.style.display = 'block';
+
+    WebServer.download(file, function(err, path) {
+      if(err) {
+        status.className = "alert alert-danger";
+        status.innerHTML = "Error downloading zip file!";
+        return;
+      }
+
+      status.innerHTML = "Extracting zip file...";
+      WebServer.install(path, function(err) {
+        if(err) {
+          status.className = "alert alert-danger";
+          status.innerHTML = "Error downloading zip file!";
+          return;
+        }
+        window.location = '?/';
+      });
+    });
+  }
+
   function showUI() {
     var ui = document.getElementById('ui');
     ui.style.display = 'block';
@@ -17,12 +41,7 @@ requirejs(['filer', 'webserver'], function(Filer, WebServer) {
     var upload = document.getElementById('upload');
     upload.addEventListener('change', function() {
       var file = this.files[0];
-      WebServer.download(file, function(err, path) {
-        // XXX deal with err
-        WebServer.install(path, function() {
-          window.location = '?/';
-        });
-      });
+      install(file);
     }, false);
   }
 
@@ -61,19 +80,15 @@ requirejs(['filer', 'webserver'], function(Filer, WebServer) {
         return;
       }
       if(option === 'install') {
-        WebServer.download(value, function(err, path) {
-          // XXX deal with err
-          WebServer.install(path, function() {
-            // Show the web root
-            window.location = '?/';
-          });
-        });
+        install(value);
         return;
       }
     }
 
-    // Case 3: a path was given into the web root, try to serve it
-    WebServer.serve(option);
+    // Case 3: a path was given into the web root, try to serve it.
+    // Strip any server added trailing slash (unless we have '/').
+    var url = option === '/' ? option : option.replace(/\/$/, '');
+    WebServer.serve(url);
   }
 
   boot();
