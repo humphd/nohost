@@ -2,6 +2,7 @@ define(['filer', 'async', 'log', 'content'],
 function(Filer, Async, Log, Content) {
 
   var Path = Filer.Path;
+  var watchList = {};
 
   /**
    * Open, Write to the document stream, and Close.
@@ -11,6 +12,20 @@ function(Filer, Async, Log, Content) {
     document.open();
     document.write(markup);
     document.close();
+  }
+
+  /**
+   * Read a file and maybe setup a watch for changes to trigger a reload.
+   */
+  function _readFile(fs, path, encoding, callback) {
+    fs.readFile(path, encoding, function(err, data) {
+      if(err) {
+        return callback(err);
+      }
+
+      watchList[path] = true;
+      callback(null, data);
+    });
   }
 
   /**
@@ -37,7 +52,7 @@ function(Filer, Async, Log, Content) {
             return cb();
           }
 
-          fs.readFile(path, function(err, data) {
+          _readFile(fs, path, null, function(err, data) {
             if(err) {
               return cb(err);
             }
@@ -90,7 +105,7 @@ function(Filer, Async, Log, Content) {
               return cb();
             }
 
-            fs.readFile(path, 'utf8', function(err, data) {
+            _readFile(fs, path, 'utf8', function(err, data) {
               if(err) {
                 return cb(err);
               }
@@ -124,7 +139,7 @@ function(Filer, Async, Log, Content) {
               return cb();
             }
 
-            fs.readFile(path, 'utf8', function(err, data) {
+            _readFile(fs, path, 'utf8', function(err, data) {
               if(err) {
                 return cb(err);
               }
@@ -142,7 +157,7 @@ function(Filer, Async, Log, Content) {
           callback();
         });
       },
-      function styles(callback) {
+      function inlineStyles(callback) {
         var elems = doc.querySelectorAll('style');
 
         Async.eachSeries(elems, function(elem, cb) {
@@ -166,6 +181,31 @@ function(Filer, Async, Log, Content) {
           callback();
         });
       },
+      function styleAttributes(callback) {
+        var elems = doc.querySelectorAll('[style]');
+
+        Async.eachSeries(elems, function(elem, cb) {
+          var content = elem.getAttribute('style');
+          if(!content) {
+            cb();
+            return;
+          }
+
+          _processCSS(content, path, fs, function(err, css) {
+            if(err) {
+              Log.error(err);
+            }
+            elem.setAttribute('style', css);
+            cb();
+          });
+        }, function(err) {
+          if(err) {
+            Log.error(err);
+          }
+          callback();
+        });
+
+      },
       function imgs(callback) {
         rewriteElements('img', 'src', null, callback);
       },
@@ -180,6 +220,17 @@ function(Filer, Async, Log, Content) {
       },
       function audios(callback) {
         rewriteElements('audio', 'src', null, callback);
+      },
+      function nohost(callback) {
+        // Inject nohost scripts and shims to override native behaviour
+        var head = doc.getElementsByTagName('head')[0];
+        var nohostScript = doc.createElement('script');
+        var nohostWatchlist = Object.keys(watchList).toString();
+
+        nohostScript.src = 'shims/nohost.js';
+        nohostScript.setAttribute('data-nohost-watchlist', nohostWatchlist);
+        head.insertBefore(nohostScript, head.firstChild);
+        callback();
       }
     ], function(err, result) {
       // Return the processed HTML
@@ -205,7 +256,7 @@ function(Filer, Async, Log, Content) {
         }
 
         var filename = input.splice(0,1)[0];
-        fs.readFile(Path.resolve(dir, filename), function(err, data) {
+        _readFile(fs, Path.resolve(dir, filename), null, function(err, data) {
           if(err) {
             return next("failed on " + path, replacements);
           }
@@ -347,7 +398,7 @@ function(Filer, Async, Log, Content) {
      * Send the raw file, making it somewhat more readable
      */
     handleFile: function(path, fs) {
-      fs.readFile(path, 'utf8', function(err, data) {
+      _readFile(fs, path, 'utf8', function(err, data) {
         if(err) {
           Log.error('unable to read `' + path + '`');
           this.handle404(path);
@@ -461,7 +512,7 @@ function(Filer, Async, Log, Content) {
      * HTML files need to have external resources inlined
      */
     handleHTML: function(path, fs) {
-      fs.readFile(path, 'utf8', function(err, html) {
+      _readFile(fs, path, 'utf8', function(err, html) {
         if(err) {
           Log.error('unable to read `' + path + '`');
           this.handle404(path);

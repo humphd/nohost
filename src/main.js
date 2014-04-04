@@ -54,7 +54,7 @@ requirejs(['filer', 'webserver'], function(Filer, WebServer) {
    * ?/path/to/file --> serves a path from the web root
    */
   function boot() {
-    var bootOption = location.search.substring(1).split('=');
+    var bootOption = document.location.search.substring(1).split('=');
     var option = bootOption[0];
     var value = bootOption[1];
 
