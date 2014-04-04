@@ -79,6 +79,11 @@ var nohost = (function(window) {
     window.Image = Image;
   }
 
+  // Alter XMLHttpRequest so it knows about nohost files
+  function rewireXHR() {
+    require(['xhr']);
+  }
+
   // Setup auto-reload behaviour for watched paths
   function startWatchers() {
     function setupWatchers(watchList) {
@@ -119,9 +124,9 @@ var nohost = (function(window) {
       provider: new Filer.FileSystem.providers.Fallback()
     });
 
-
     rewireScript();
     rewireImage();
+    rewireXHR();
     startWatchers();
     cleanEnv();
   }
@@ -131,7 +136,12 @@ var nohost = (function(window) {
   return {
     fs: function() {
       return fs;
-    }
+    },
+    readFile: function(path, encoding, callback) {
+      path = Path.resolve(nohostDir, path);
+      fs.readFile(path, encoding, callback);
+    },
+    rewriteURL: rewriteURL
   };
 
 }(window));

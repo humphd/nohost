@@ -2,11 +2,12 @@ requirejs.config({
   baseUrl: 'src/',
   paths: {
     filer: '../lib/filer.min',
-    async: '../lib/async'
+    async: '../lib/async',
+    xhr: '../lib/xmlhttprequest'
   }
 });
 
-requirejs(['filer', 'webserver'], function(Filer, WebServer) {
+requirejs(['filer', 'webserver', 'xhr'], function(Filer, WebServer) {
   var Path = Filer.Path;
 
   function install(file) {
