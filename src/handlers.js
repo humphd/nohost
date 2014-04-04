@@ -344,7 +344,7 @@ function(Filer, Async, Log, Content) {
     },
 
     /**
-     * Send the raw file
+     * Send the raw file, making it somewhat more readable
      */
     handleFile: function(path, fs) {
       fs.readFile(path, 'utf8', function(err, data) {
@@ -353,7 +353,16 @@ function(Filer, Async, Log, Content) {
           this.handle404(path);
           return;
         }
-        _writeMarkup(data);
+
+        // Escape the file a bit for inclusing in <pre>...</pre>
+        data = data.replace(/\</gm, '&lt;')
+                   .replace(/\>/gm, '&gt;')
+                   .replace(/&/gm, '&amp;');
+
+        var syntheticDoc = '<!DOCTYPE html>' +
+          '<html><head></head>' +
+          '<body><pre>' + data + '</pre></body></html>';
+        _writeMarkup(syntheticDoc);
       });
     },
 
