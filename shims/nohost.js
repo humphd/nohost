@@ -139,13 +139,19 @@ var nohost = (function(window) {
   init();
 
   return {
+    Filer: Filer,
+    Path: Path,
+    dir: nohostDir,
+
     fs: function() {
       return fs;
     },
+
     readFile: function(path, encoding, callback) {
       path = Path.resolve(nohostDir, path);
       fs.readFile(path, encoding, callback);
     },
+
     rewriteURL: rewriteURL
   };
 
