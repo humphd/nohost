@@ -114,8 +114,13 @@ var nohost = (function(window) {
 
   // Remove things we've added to the JS env that may not be needed
   function cleanEnv() {
+    window.define = null;
+    window.require = null;
+    window.requirejs = null;
+
     delete window.define;
     delete window.require;
+    delete window.requirejs;
   }
 
   function init() {
