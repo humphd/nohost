@@ -3,7 +3,7 @@ requirejs.config({
   paths: {
     filer: '../lib/filer.min',
     async: '../lib/async',
-    xhr: '../lib/xmlhttprequest'
+    xhr: '../shims/xmlhttprequest'
   }
 });
 
