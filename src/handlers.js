@@ -406,8 +406,8 @@ function(Filer, Async, Log, Content) {
         }
 
         // Escape the file a bit for inclusing in <pre>...</pre>
-        data = data.replace(/\</gm, '&lt;')
-                   .replace(/\>/gm, '&gt;')
+        data = data.replace(/</gm, '&lt;')
+                   .replace(/>/gm, '&gt;')
                    .replace(/&/gm, '&amp;');
 
         var syntheticDoc = '<!DOCTYPE html>' +
