@@ -7,7 +7,7 @@ requirejs.config({
   }
 });
 
-requirejs(['filer', 'webserver'], function(Filer, WebServer) {
+requirejs(['filer', 'webserver', 'xhr'], function(Filer, WebServer) {
   var Path = Filer.Path;
 
   function install(file) {
@@ -89,11 +89,7 @@ requirejs(['filer', 'webserver'], function(Filer, WebServer) {
     // Case 3: a path was given into the web root, try to serve it.
     // Strip any server added trailing slash (unless we have '/').
     var url = option === '/' ? option : option.replace(/\/$/, '');
-
-    // We need to swap out the XHR implementation when loading from the filesystem
-    require(['xhr'], function() {
-      WebServer.serve(url);
-    });
+    WebServer.serve(url);
   }
 
   boot();

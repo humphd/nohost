@@ -91,6 +91,6 @@ define(['filer'], function(Filer) {
     return self;
   }
 
-	window.XMLHttpRequest = $XMLHttpRequest;
+	return $XMLHttpRequest;
 
 });

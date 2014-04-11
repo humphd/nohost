@@ -1,3 +1,10 @@
+/**
+ * The nohost.js shim is the first thing loaded by any page
+ * being served from the nohost server (ie., it gets injected
+ * before all other scripts). It is used to alter the environment
+ * so dynamic changes requiring data from the filesystem will
+ * continue to work in the nohost served page.
+ */
 var nohost = (function(window) {
 
   // The server's filesystem
@@ -58,7 +65,7 @@ var nohost = (function(window) {
     window.Image = Image;
   }
 
-  // Alter <img> to intercept paths in the filesystem
+  // Alter <script> to intercept paths in the filesystem
   function rewireScript() {
     var $Image = window.Image;
 
@@ -81,7 +88,7 @@ var nohost = (function(window) {
 
   // Alter XMLHttpRequest so it knows about nohost files
   function rewireXHR() {
-    require(['xhr']);
+    window.XMLHttpRequest = require('xhr');
   }
 
   // Setup auto-reload behaviour for watched paths
@@ -133,6 +140,8 @@ var nohost = (function(window) {
     rewireImage();
     rewireXHR();
     startWatchers();
+
+    // Do this last, so we don't lose require while we still need it
     cleanEnv();
   }
 
