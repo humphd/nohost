@@ -3,6 +3,7 @@ requirejs.config({
   paths: {
     filer: '../lib/filer.min',
     async: '../lib/async',
+    domparser: '../lib/domparser',
     xhr: '../shims/xmlhttprequest'
   }
 });

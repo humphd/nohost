@@ -7,6 +7,9 @@
  */
 var nohost = (function(window) {
 
+  // Get the stashed require env off the document
+  var require = document.require;
+
   // The server's filesystem
   var Filer = require('filer');
   var Path = Filer.Path;
@@ -119,17 +122,6 @@ var nohost = (function(window) {
     }
   }
 
-  // Remove things we've added to the JS env that may not be needed
-  function cleanEnv() {
-    window.define = null;
-    window.require = null;
-    window.requirejs = null;
-
-    delete window.define;
-    delete window.require;
-    delete window.requirejs;
-  }
-
   function init() {
     // Our require setup is still alive in the DOM, so we can get at Filer
     fs = new Filer.FileSystem({
@@ -140,9 +132,6 @@ var nohost = (function(window) {
     rewireImage();
     rewireXHR();
     startWatchers();
-
-    // Do this last, so we don't lose require while we still need it
-    cleanEnv();
   }
 
   init();

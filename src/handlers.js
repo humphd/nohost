@@ -1,4 +1,4 @@
-define(['filer', 'async', 'log', 'content'],
+define(['filer', 'async', 'log', 'content', 'domparser'],
 function(Filer, Async, Log, Content) {
 
   var Path = Filer.Path;
@@ -8,10 +8,11 @@ function(Filer, Async, Log, Content) {
    * Open, Write to the document stream, and Close.
    */
   function _writeMarkup(markup) {
-    /* jshint evil:true */
-    document.open();
-    document.write(markup);
-    document.close();
+    // Stash our require env on the document object so it survies the window
+    // being recreated. The nohost.js shim uses it to acquire shared resources
+    // (e.g., filesystem) that are already loaded.
+    document.require = require;
+    document.documentElement.innerHTML = markup;
   }
 
   /**
@@ -221,7 +222,7 @@ function(Filer, Async, Log, Content) {
       function audios(callback) {
         rewriteElements('audio', 'src', null, callback);
       },
-      function nohost(callback) {
+      function injectNohost(callback) {
         // Inject nohost scripts and shims to override native behaviour
         var head = doc.getElementsByTagName('head')[0];
         var nohostScript = doc.createElement('script');
@@ -298,238 +299,244 @@ function(Filer, Async, Log, Content) {
     });
   }
 
-  return {
+  /**
+   * Send an Apache-style 404
+   */
+  function handle404(url) {
+    var html = '<!DOCTYPE html>' +
+          '<html><head>' +
+          '<title>404 Not Found</title>' +
+          '</head><body>' +
+          '<h1>Not Found</h1>' +
+          '<p>The requested URL ' + url + ' was not found on this server.</p>' +
+          '<hr>' +
+          '<address>nohost/0.0.1 (Web) Server</address>' +
+          '</body></html>';
+    _writeMarkup(html);
+  }
 
-    /**
-     * Send an Apache-style 404
-     */
-    handle404: function(url) {
-      var html = '<!DOCTYPE html>' +
-        '<html><head>' +
-        '<title>404 Not Found</title>' +
-        '</head><body>' +
-        '<h1>Not Found</h1>' +
-        '<p>The requested URL ' + url + ' was not found on this server.</p>' +
-        '<hr>' +
-        '<address>nohost/0.0.1 (Web) Server</address>' +
-        '</body></html>';
+  /**
+   * Synthesize a document for images
+   */
+  function handleImage(path, fs) {
+    var syntheticDoc = '<!DOCTYPE html>' +
+          '<html><head>' +
+          '<title>' + path + '</title>' +
+          '<style>' +
+          '  /* based on http://dxr.mozilla.org/mozilla-central/source/layout/style/TopLevelImageDocument.css */' +
+          '  @media not print {' +
+          '    body {' +
+          '      margin: 0;' +
+          '    }' +
+          '    img {' +
+          '      text-align: center;' +
+          '      position: absolute;' +
+          '      margin: auto;' +
+          '      top: 0;' +
+          '      right: 0;' +
+          '      bottom: 0;' +
+          '      left: 0;' +
+          '    }' +
+          '  }' +
+          '  img {' +
+          '    image-orientation: from-image;' +
+          '  }' +
+          '</style></head><body>' +
+          '<img src="' + path + '"></body></html>';
+    _processHTML(syntheticDoc, path, fs, function(err, html) {
+      if(err) {
+        Log.error('unable to read `' + path + '`');
+        handle404(path);
+        return;
+      }
       _writeMarkup(html);
-    },
+    });
+  }
 
-    /**
-     * Synthesize a document for images
-     */
-    handleImage: function(path, fs) {
+  /**
+   * Synthesize a document for media
+   */
+  function handleMedia(path, fs) {
+    var syntheticDoc = '<!DOCTYPE html>' +
+          '<html><head>' +
+          '<title>' + path + '</title>' +
+          '<style>' +
+          '  /* based on http://dxr.mozilla.org/mozilla-central/source/layout/style/TopLevelVideoDocument.css */' +
+          '  body {' +
+          '    height: 100%;' +
+          '    width: 100%;' +
+          '    margin: 0;' +
+          '    padding: 0;' +
+          '  }' +
+          '  video {' +
+          '    position: absolute;' +
+          '    top: 0;' +
+          '    right: 0;' +
+          '    bottom: 0;' +
+          '    left: 0;' +
+          '    margin: auto;' +
+          '    max-width: 100%;' +
+          '    max-height: 100%;' +
+          '  }' +
+          '  video:focus {' +
+          '    outline-width: 0;' +
+          '  }' +
+          '</style></head><body>' +
+          '<video src="' + path + '" controls></video></body></html>';
+    _processHTML(syntheticDoc, path, fs, function(err, html) {
+      if(err) {
+        Log.error('unable to read `' + path + '`');
+        handle404(path);
+        return;
+      }
+      _writeMarkup(html);
+    });
+  }
+
+  /**
+   * Send the raw file, making it somewhat more readable
+   */
+  function handleFile(path, fs) {
+    _readFile(fs, path, 'utf8', function(err, data) {
+      if(err) {
+        Log.error('unable to read `' + path + '`');
+        handle404(path);
+        return;
+      }
+
+      // Escape the file a bit for inclusing in <pre>...</pre>
+      data = data.replace(/</gm, '&lt;')
+        .replace(/>/gm, '&gt;')
+        .replace(/&/gm, '&amp;');
+
       var syntheticDoc = '<!DOCTYPE html>' +
-        '<html><head>' +
-        '<title>' + path + '</title>' +
-        '<style>' +
-        '  /* based on http://dxr.mozilla.org/mozilla-central/source/layout/style/TopLevelImageDocument.css */' +
-        '  @media not print {' +
-        '    body {' +
-        '      margin: 0;' +
-        '    }' +
-        '    img {' +
-        '      text-align: center;' +
-        '      position: absolute;' +
-        '      margin: auto;' +
-        '      top: 0;' +
-        '      right: 0;' +
-        '      bottom: 0;' +
-        '      left: 0;' +
-        '    }' +
-        '  }' +
-        '  img {' +
-        '    image-orientation: from-image;' +
-        '  }'+
-        '</style></head><body>' +
-        '<img src="' + path + '"></body></html>';
-      _processHTML(syntheticDoc, path, fs, function(err, html) {
-        if(err) {
-          Log.error('unable to read `' + path + '`');
-          this.handle404(path);
-          return;
-        }
-        _writeMarkup(html);
-      });
-    },
+            '<html><head></head>' +
+            '<body><pre>' + data + '</pre></body></html>';
+      _writeMarkup(syntheticDoc);
+    });
+  }
 
-    /**
-     * Synthesize a document for media
-     */
-    handleMedia: function(path, fs) {
-      var syntheticDoc = '<!DOCTYPE html>' +
-        '<html><head>' +
-        '<title>' + path + '</title>' +
-        '<style>' +
-        '  /* based on http://dxr.mozilla.org/mozilla-central/source/layout/style/TopLevelVideoDocument.css */' +
-        '  body {' +
-        '    height: 100%;' +
-        '    width: 100%;' +
-        '    margin: 0;' +
-        '    padding: 0;' +
-        '  }' +
-        '  video {' +
-        '    position: absolute;' +
-        '    top: 0;' +
-        '    right: 0;' +
-        '    bottom: 0;' +
-        '    left: 0;' +
-        '    margin: auto;' +
-        '    max-width: 100%;' +
-        '    max-height: 100%;' +
-        '  }' +
-        '  video:focus {' +
-        '    outline-width: 0;' +
-        '  }' +
-        '</style></head><body>' +
-        '<video src="' + path + '" controls></video></body></html>';
-      _processHTML(syntheticDoc, path, fs, function(err, html) {
-        if(err) {
-          Log.error('unable to read `' + path + '`');
-          this.handle404(path);
-          return;
-        }
-        _writeMarkup(html);
-      });
-    },
+  /**
+   * Send an Apache-style directory listing
+   */
+  function handleDir(path, fs) {
+    var sh = fs.Shell();
+    var parent = Path.dirname(path);
 
-    /**
-     * Send the raw file, making it somewhat more readable
-     */
-    handleFile: function(path, fs) {
-      _readFile(fs, path, 'utf8', function(err, data) {
-        if(err) {
-          Log.error('unable to read `' + path + '`');
-          this.handle404(path);
-          return;
-        }
+    var header = '<!DOCTYPE html>' +
+          '<html><head><title>Index of ' + path + '</title></head>' +
+          '<body><h1>Index of ' + path + '</h1>' +
+          '<table><tr><th><img src="icons/blank.png" alt="[ICO]"></th>' +
+          '<th><a href="#">Name</a></th><th><a href="#">Last modified</a></th>' +
+          '<th><a href="#">Size</a></th><th><a href="#">Description</a></th></tr>' +
+          '<tr><th colspan="5"><hr></th></tr>' +
+          '<tr><td valign="top"><img src="icons/back.png" alt="[DIR]"></td>' +
+          '<td><a href="?' + parent + '">Parent Directory</a>       </td><td>&nbsp;</td>' +
+          '<td align="right">  - </td><td>&nbsp;</td></tr>';
 
-        // Escape the file a bit for inclusing in <pre>...</pre>
-        data = data.replace(/</gm, '&lt;')
-                   .replace(/>/gm, '&gt;')
-                   .replace(/&/gm, '&amp;');
+    var footer = '<tr><th colspan="5"><hr></th></tr>' +
+          '</table><address>nohost/0.0.1 (Web)</address>' +
+          '</body></html>';
 
-        var syntheticDoc = '<!DOCTYPE html>' +
-          '<html><head></head>' +
-          '<body><pre>' + data + '</pre></body></html>';
-        _writeMarkup(syntheticDoc);
-      });
-    },
-
-    /**
-     * Send an Apache-style directory listing
-     */
-    handleDir: function(path, fs) {
-      var sh = fs.Shell();
-      var parent = Path.dirname(path);
-
-      var header = '<!DOCTYPE html>' +
-            '<html><head><title>Index of ' + path + '</title></head>' +
-            '<body><h1>Index of ' + path + '</h1>' +
-            '<table><tr><th><img src="icons/blank.png" alt="[ICO]"></th>' +
-            '<th><a href="#">Name</a></th><th><a href="#">Last modified</a></th>' +
-            '<th><a href="#">Size</a></th><th><a href="#">Description</a></th></tr>' +
-            '<tr><th colspan="5"><hr></th></tr>' +
-            '<tr><td valign="top"><img src="icons/back.png" alt="[DIR]"></td>' +
-            '<td><a href="?' + parent + '">Parent Directory</a>       </td><td>&nbsp;</td>' +
-            '<td align="right">  - </td><td>&nbsp;</td></tr>';
-
-      var footer = '<tr><th colspan="5"><hr></th></tr>' +
-            '</table><address>nohost/0.0.1 (Web)</address>' +
-            '</body></html>';
-
-      function formatDate(d) {
-        // 20-Apr-2004 17:14
-        return d.getDay() + '-' +
-          d.getMonth() + '-' +
-          d.getFullYear() + ' ' +
-          d.getHours() + ':' +
-          d.getMinutes();
-      }
-
-      function formatSize(s) {
-        var units = ['', 'K', 'M'];
-        if(!s) {
-          return '-';
-        }
-        var i = (Math.floor(Math.log(s) / Math.log(1024)))|0;
-        return Math.round(s / Math.pow(1024, i), 2) + units[i];
-      }
-
-      function row(icon, alt, href, name, modified, size) {
-        icon = icon || 'icons/unknown.png';
-        alt = alt || '[   ]';
-        modified = formatDate(new Date(modified));
-        size = formatSize(size);
-
-        return '<tr><td valign="top"><img src="' + icon + '" alt="' + alt + '"></td><td>' +
-          '<a href="' + href + '">' + name + '</a>             </td>' +
-          '<td align="right">' + modified + '  </td>' +
-          '<td align="right">' + size + '</td><td>&nbsp;</td></tr>';
-      }
-
-      function processEntries(entries) {
-        var rows = '';
-        entries.forEach(function(entry) {
-          var name = Path.basename(entry.path);
-          var ext = Path.extname(entry.path);
-          var href = '?' + Path.join(path, entry.path);
-          var icon;
-          var alt;
-
-          if(entry.type === 'DIRECTORY') {
-            icon = 'icons/folder.png';
-            alt = '[DIR]';
-          } else { // file
-            if(Content.isImage(ext)) {
-              icon = 'icons/image2.png';
-              alt = '[IMG]';
-            } else if(Content.isMedia(ext)) {
-              icon = 'icons/movie.png';
-              alt = '[MOV]';
-            } else {
-              icon = 'icons/text.png';
-              alt = '[TXT]';
-            }
-          }
-          rows += row(icon, alt, href, name, entry.modified, entry.size);
-        });
-
-        _writeMarkup(header + rows + footer);
-      }
-
-      sh.ls(path, function(err, list) {
-        if(err) {
-          this.handle404(path);
-          return;
-        }
-        processEntries(list);
-      });
-    },
-
-    /**
-     * HTML files need to have external resources inlined
-     */
-    handleHTML: function(path, fs) {
-      _readFile(fs, path, 'utf8', function(err, html) {
-        if(err) {
-          Log.error('unable to read `' + path + '`');
-          this.handle404(path);
-          return;
-        }
-
-        _processHTML(html, path, fs, function(err, html) {
-          if(err) {
-            Log.error('unable to read `' + path + '`');
-            this.handle404(path);
-            return;
-          }
-          _writeMarkup(html);
-        });
-      });
+    function formatDate(d) {
+      // 20-Apr-2004 17:14
+      return d.getDay() + '-' +
+        d.getMonth() + '-' +
+        d.getFullYear() + ' ' +
+        d.getHours() + ':' +
+        d.getMinutes();
     }
 
+    function formatSize(s) {
+      var units = ['', 'K', 'M'];
+      if(!s) {
+        return '-';
+      }
+      var i = (Math.floor(Math.log(s) / Math.log(1024)))|0;
+      return Math.round(s / Math.pow(1024, i), 2) + units[i];
+    }
+
+    function row(icon, alt, href, name, modified, size) {
+      icon = icon || 'icons/unknown.png';
+      alt = alt || '[   ]';
+      modified = formatDate(new Date(modified));
+      size = formatSize(size);
+
+      return '<tr><td valign="top"><img src="' + icon + '" alt="' + alt + '"></td><td>' +
+        '<a href="' + href + '">' + name + '</a>             </td>' +
+        '<td align="right">' + modified + '  </td>' +
+        '<td align="right">' + size + '</td><td>&nbsp;</td></tr>';
+    }
+
+    function processEntries(entries) {
+      var rows = '';
+      entries.forEach(function(entry) {
+        var name = Path.basename(entry.path);
+        var ext = Path.extname(entry.path);
+        var href = '?' + Path.join(path, entry.path);
+        var icon;
+        var alt;
+
+        if(entry.type === 'DIRECTORY') {
+          icon = 'icons/folder.png';
+          alt = '[DIR]';
+        } else { // file
+          if(Content.isImage(ext)) {
+            icon = 'icons/image2.png';
+            alt = '[IMG]';
+          } else if(Content.isMedia(ext)) {
+            icon = 'icons/movie.png';
+            alt = '[MOV]';
+          } else {
+            icon = 'icons/text.png';
+            alt = '[TXT]';
+          }
+        }
+        rows += row(icon, alt, href, name, entry.modified, entry.size);
+      });
+
+      _writeMarkup(header + rows + footer);
+    }
+
+    sh.ls(path, function(err, list) {
+      if(err) {
+        handle404(path);
+        return;
+      }
+      processEntries(list);
+    });
+  }
+
+  /**
+   * HTML files need to have external resources inlined
+   */
+  function handleHTML(path, fs) {
+    _readFile(fs, path, 'utf8', function(err, html) {
+      if(err) {
+        Log.error('unable to read `' + path + '`');
+        handle404(path);
+        return;
+      }
+
+      _processHTML(html, path, fs, function(err, html) {
+        if(err) {
+          Log.error('unable to read `' + path + '`');
+          handle404(path);
+          return;
+        }
+        _writeMarkup(html);
+      });
+    });
+  }
+
+
+  return {
+    handle404: handle404,
+    handleImage: handleImage,
+    handleMedia: handleMedia,
+    handleFile: handleFile,
+    handleDir: handleDir,
+    handleHTML: handleHTML
   };
 
 });
