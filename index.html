@@ -2,8 +2,14 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <meta name="mobile-web-app-capable" content="yes">
     <link href="styles/makerstrap.css" rel="stylesheet">
     <script data-main="src/main" src="lib/require.js"></script>
+    <style>
+      .btn {
+        font-size: 40px;
+      }
+    </style>
   </head>
   <body>
     <div id="ui" style="display:none">
@@ -17,46 +23,15 @@
 
       <div class="jumbotron">
         <div class="container">
-          <h1>nohost</h1>
-          <p>A web server in your web browser</p>
+          <h1>nohost, Mobile Edition</h1>
+          <p>An app store your mobile browser</p>
         </div>
       </div>
 
       <div class="container">
-        <h2 class="page-header">Overview</h2>
-        <p>This page is a bootloader for a web-page based web server. It creates a persistent filesystem in your browser
-           (using <a href="https://github.com/js-platform/filer">Filer</a>). This filesystem is then used to host web sites
-           and applications, which are installed from zip archives (e.g., all GitHub repos have a <a href="http://stackoverflow.com/questions/2751227/how-to-download-source-in-zip-format-from-github/18583977#18583977">Download link</a> to create a zip).</p>
-
-        <p>The files in the filesystem can then be served using paths on the query string. The filesystem is shared across
-           all windows using the same origin, which means you can have an application in one tab editing files, and nohost
-           showing you those files in another.</p>
-
-        <h2 class="page-header">Boot Options</h2>
-        <p>Boot options are passed on the query string. Valid options include:</p>
-        <ul>
-          <li><code>?reset</code> (e.g., <a href="?reset">?reset</a> format the current fs, erasing all files)
-          <li><code>?install={zipfile.zip}</code> (e.g., <a href="?install=restaurant-gh-pages.zip">?install=restaurant-gh-pages.zip</a>)
-          <li><code>?/{path/to/file/in/filesystem}</code> (e.g., serve the file at a given path, <a href="?/restaurant-gh-pages">?/restaurant-gh-pages</a>)
-        </ul>
-
-        <h2 class="page-header">Installing Files</h2>
-        <p>You can also install your own web site or application via a zip file. Use the button below to find one on your local computer.</p>
-        <p class="alert alert-info">NOTE: no files are ever uploaded to any server. Everything is local to your browser.</p>
-        <div class="panel panel-default">
-          <div class="panel-body">
-            <form role="form">
-              <div class="form-group">
-                <label for="exampleInputFile">File input</label>
-                <input type="file" id="upload" accept="application/zip">
-                <p class="help-block">If you want to install your own .zip file, select one here.</p>
-              </div>
-            </form>
-          </div>
-        </div>
-
+        <button id="install" class="btn btn-primary">Install App</button>&nbsp;
+        <button id="launch" class="btn btn-secondary">Launch App</button>
         <div id="status" class="alert alert-success" style="display:none"></div>
-
       </div>
     </div>
   </body>

@@ -100,6 +100,8 @@ function(Filer, Async, Log, Content) {
           }
 
           var path = Path.resolve(dir, url);
+          var ext = Path.extname(path);
+
           fs.exists(path, function(found) {
             if(!found) {
               return cb();
@@ -110,10 +112,21 @@ function(Filer, Async, Log, Content) {
                 return cb(err);
               }
 
-              _processCSS(data, path, fs, function(err, css) {
-                elem.href = Content.toDataURL(data, 'text/css');
+              if(Content.isHTML(ext)) {
+                _processHTML(data, path, fs, function(err, html) {
+                  elem.href = Content.toDataURL(html, 'text/html');
+                  cb();
+                });
+              } else if(ext === '.css') {
+                _processCSS(data, path, fs, function(err, css) {
+console.log('found css <link>', path);
+                  elem.href = Content.toDataURL(css, 'text/css');
+                  cb();
+                });
+              } else {
+                console.log('skipping <link> processing for ' + path);
                 cb();
-              });
+              }
             });
           });
         }, function(err) {

@@ -29,7 +29,7 @@ requirejs(['filer', 'webserver'], function(Filer, WebServer) {
           status.innerHTML = "Error downloading zip file!";
           return;
         }
-        window.location = '?/';
+        window.location = '?/appmaker-app/index.html';
       });
     });
   }
@@ -38,12 +38,18 @@ requirejs(['filer', 'webserver'], function(Filer, WebServer) {
     var ui = document.getElementById('ui');
     ui.style.display = 'block';
 
-    // Listen for user specified zip files to install
-    var upload = document.getElementById('upload');
-    upload.addEventListener('change', function() {
-      var file = this.files[0];
-      install(file);
-    }, false);
+    var install = document.getElementById('install');
+    var launch = document.getElementById('launch');
+
+    install.addEventListener('click', function() {
+      window.location = '?install=app.zip';
+    });
+
+    launch.addEventListener('click', function() {
+      window.location = '?/appmaker-app/index.html';
+    });
+
+    window.scrollTo(0,1);
   }
 
   /**

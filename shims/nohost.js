@@ -133,7 +133,7 @@ var nohost = (function(window) {
     rewireImage();
     rewireXHR();
     startWatchers();
-    cleanEnv();
+//    cleanEnv();
   }
 
   init();
