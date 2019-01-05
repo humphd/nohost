@@ -1,25 +1,29 @@
 {
   "name": "nohost",
   "description": "A web server in your web browser",
-  "keywords": ["web", "server", "files"],
-  "version": "0.0.1",
+  "keywords": [
+    "web",
+    "server",
+    "files"
+  ],
+  "version": "1.0.0",
   "author": "David Humphrey <david.humphrey@senecacolleage.ca> (@humphd)",
   "homepage": "http://humphd.github.io/nohost/",
-  "license": "Apache2",
+  "license": "Apache-2.0",
   "scripts": {
-    "test": "grunt"
+    "dev": "parcel src/index.html",
+    "build": "parcel build src/index.html"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/humphd/nohost.git"
   },
+  "dependencies": {
+    "filer": "^1.1.0",
+    "mime-types": "^2.1.21"
+  },
   "devDependencies": {
-    "grunt": "~0.4.0",
-    "grunt-contrib-clean": "~0.4.0",
-    "grunt-contrib-requirejs": "~0.4.0",
-    "grunt-contrib-uglify": "~0.1.2",
-    "grunt-zip": "~0.13.0",
-    "grunt-contrib-connect": "~0.1.2",
-    "grunt-contrib-jshint": "~0.7.1"
+    "eslint": "^5.11.1",
+    "parcel": "^1.11.0"
   }
 }
