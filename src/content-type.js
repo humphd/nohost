@@ -1,5 +1,9 @@
 const mime = require('mime-types');
 
+function getMimeType(path) {
+  return mime.lookup(path) || 'application/octet-stream';
+}
+
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types#Audio_and_video_types
 function isMedia(path) {
   let mimeType = mime.lookup(path);
@@ -14,7 +18,7 @@ function isMedia(path) {
     return true;
   }
 
-  // Any thing else with `audio/*` or `video/*` is "media"
+  // Anything else with `audio/*` or `video/*` is "media"
   return mimeType.startsWith('audio/') || mimeType.startsWith('video/');
 }
 
@@ -26,10 +30,6 @@ function isImage(path) {
   }
 
   return mimeType.toLowerCase().startsWith('image/');
-}
-
-function getMimeType(path) {
-  return mime.lookup(path) || 'application/octet-stream';
 }
 
 module.exports = {

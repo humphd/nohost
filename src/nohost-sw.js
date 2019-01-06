@@ -10,7 +10,7 @@ workbox.skipWaiting();
 workbox.clientsClaim();
 
 function install(route) {
-  const webServer = new WebServer();
+  const webServer = new WebServer(route);
   const wwwRegex = new RegExp(`/${route}(/.*)`);
 
   workbox.routing.registerRoute(
@@ -19,23 +19,18 @@ function install(route) {
       // Pull the filesystem path off the url 
       const path = url.pathname.match(wwwRegex)[1];
 
-      // Allow passing ?json on URL to get back JSON vs. raw response
+      // Allow passing `?json` on URL to get back JSON vs. raw response
       const formatter =
         url.searchParams.get('json') !== null
           ? jsonFormatter
           : htmlFormatter;
 
-      return new Promise((resolve, reject) => {
-        webServer.serve(path, formatter)
-          .then((res) => {
-            resolve(new Response(res.body, {
-              status: res.status,
-              statusText: 'OK',
-              headers: { 'Content-Type': res.type },
-            }));
-          })
-          .catch(reject);
-      });
+      // Allow passing `?download` or `dl` to have the file downloaded vs. displayed
+      const download =
+        url.searchParams.get('download') !== null ||
+        url.searchParams.get('dl') !== null;
+          
+      return webServer.serve(path, formatter, download);
     },
     'GET'
   );

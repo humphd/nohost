@@ -45,7 +45,7 @@ const formatRow = (
           <td align='right'>${size}</td><td>&nbsp;</td></tr>`;
 };
 
-const footerClose = '<address>nohost (Web)</address></body></html>';
+const footerClose = '<address>nohost (Web Browser Server)</address></body></html>';
 
 /**
  * Send an Apache-style 404
@@ -62,8 +62,11 @@ function format404(url) {
 
   return {
     body,
-    type: 'text/html',
-    status: 404
+    config: {
+      status: 404,
+      statusText: 'Not Found',
+      headers: { 'Content-Type': 'text/html' }
+    }
   };
 }
 
@@ -83,8 +86,11 @@ function format500(path, err) {
 
   return {
     body,
-    type: 'text/html',
-    status: 500
+    config: {
+      status: 500,
+      statusText: 'Internal Error',
+      headers: { 'Content-Type': 'text/html' }
+    }
   };
 }
 
@@ -92,7 +98,7 @@ function format500(path, err) {
  * Send an Apache-style directory listing
  */
 function formatDir(route, dirPath, entries) {
-  const parent = path.dirname(dirPath);
+  const parent = path.dirname(dirPath) || '/';
   const header = `
     <!DOCTYPE html>
     <html><head><title>Index of ${dirPath}</title></head>
@@ -102,7 +108,7 @@ function formatDir(route, dirPath, entries) {
     <th><b>Size</b></th><th><b>Description</b></th></tr>
     <tr><th colspan='5'><hr></th></tr>
     <tr><td valign='top'><img src='${iconBack}' alt='[DIR]'></td>
-    <td><a href='/www${parent}'>Parent Directory</a></td><td>&nbsp;</td>
+    <td><a href='/${route}${parent}'>Parent Directory</a></td><td>&nbsp;</td>
     <td align='right'>  - </td><td>&nbsp;</td></tr>`;
   const footer = `<tr><th colspan='5'><hr></th></tr></table>${footerClose}`;
 
@@ -132,17 +138,23 @@ function formatDir(route, dirPath, entries) {
   }).join('\n');
 
   return {
-    type: 'text/html',
-    status: 200,
-    body: header + rows + footer
+    body: header + rows + footer,
+    config: {
+      status: 200,
+      statusText: 'OK',
+      headers: { 'Content-Type': 'text/html' }
+    }
   };
 }
 
 function formatFile(path, content) {
   return {
     body: content,
-    type: getMimeType(path),
-    status: 200
+    config: {
+      status: 200,
+      statusText: 'OK',
+      headers: { 'Content-Type': getMimeType(path) }
+    }
   };
 }
 
