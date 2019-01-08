@@ -3,6 +3,7 @@ const htmlFormatter = require('./html-formatter');
 const WebServer = require('./webserver');
 
 /* global workbox */
+// TODO: include this via package.json
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/3.6.1/workbox-sw.js');
 
 workbox.setConfig();
@@ -11,7 +12,10 @@ workbox.clientsClaim();
 
 function install(route) {
   const webServer = new WebServer(route);
+  // Route with /path/into/filesystem
   const wwwRegex = new RegExp(`/${route}(/.*)`);
+  // Route minus the trailing slash
+  const wwwPartialRegex = new RegExp(`/${route}$`);
 
   workbox.routing.registerRoute(
     wwwRegex,
@@ -34,11 +38,21 @@ function install(route) {
     },
     'GET'
   );
+
+  // Redirect if missing the / on our expected route
+  workbox.routing.registerRoute(
+    wwwPartialRegex,
+    ({ url }) => {
+      url.pathname = `/${route}/`;
+      return Promise.resolve(Response.redirect(url, 302));
+    },
+    'GET'
+  );
 }
 
 self.addEventListener('install', event => {
-  let route = new URL(location).searchParams.get('route');
-  // Hack: need to figure this out via Parcel and passing ?route=...
-  route = route || 'fs';
+  // Allow overriding the route we use to listen for filesystem path requests.
+  // The default will be `fs` as in `/fs/{path}`.
+  const route = new URL(location).searchParams.get('route') || 'fs';
   event.waitUntil(Promise.resolve(install(route)));
 });
