@@ -10,26 +10,30 @@ function formatContentDisposition(path, stats) {
   return `attachment; filename="${filename}"; modification-date="${modified}"; size=${stats.size};`;
 }
 
-function WebServer(route) {
-  this.route = route;
+function WebServer(config) {
+  this.route = config.route;
+  this.disableIndexes = config.disableIndexes;
+  this.directoryIndex = config.directoryIndex;
 }
 WebServer.prototype.serve = function(path, formatter, download) {
   const route = this.route;
+  const directoryIndex = this.directoryIndex;
+  const disableIndexes = this.disableIndexes;
 
-  return new Promise((resolve) => {
+  return new Promise(function(resolve) {
     function buildResponse(responseData) {
       return new Response(responseData.body, responseData.config);
     }
 
     function serveError(path, err) {
       if(err.code === 'ENOENT') {
-        return resolve(buildResponse(formatter.format404(path, err)));
+        return resolve(buildResponse(formatter.format404(path)));
       }
       resolve(buildResponse(formatter.format500(path, err)));
     }
 
     function serveFile(path, stats) {
-      fs.readFile(path, (err, contents) => {
+      fs.readFile(path, function(err, contents) {
         if(err) {
           return serveError(path, err);
         }
@@ -46,18 +50,43 @@ WebServer.prototype.serve = function(path, formatter, download) {
       });
     }
 
+    // Either serve /index.html (default index) or / (directory listing)
     function serveDir(path) {
-      sh.ls(path, (err, entries) => {
-        if(err) {
-          return serveError(path, err);
-        }
 
-        const responseData = formatter.formatDir(route, path, entries);
-        resolve(new Response(responseData.body, responseData.config));
-      });
+      function maybeServeIndexFile() {
+        const indexPath = Path.join(path, directoryIndex);
+
+        fs.stat(indexPath, function(err, stats) {
+          if(err) {
+            if(err.code === 'ENOENT' && !disableIndexes) {
+              // Fallback to a directory listing instead
+              serveDirListing();
+            } else {
+              // Let the error (likely 404) pass through instead
+              serveError(path, err);
+            }
+          } else {
+            // Index file found, serve that instead
+            serveFile(indexPath, stats);
+          }
+        });
+      }
+
+      function serveDirListing() {
+        sh.ls(path, function(err, entries) {
+          if(err) {
+            return serveError(path, err);
+          }
+  
+          const responseData = formatter.formatDir(route, path, entries);
+          resolve(new Response(responseData.body, responseData.config));
+        });
+      }
+
+      maybeServeIndexFile();
     }
 
-    fs.stat(path, (err, stats) => {
+    fs.stat(path, function(err, stats) {
       if(err) {
         return serveError(path, err);
       }

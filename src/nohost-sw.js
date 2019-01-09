@@ -10,8 +10,9 @@ workbox.setConfig();
 workbox.skipWaiting();
 workbox.clientsClaim();
 
-function install(route) {
-  const webServer = new WebServer(route);
+function install(config) {
+  const route = config.route;
+  const webServer = new WebServer(config);
   // Route with /path/into/filesystem
   const wwwRegex = new RegExp(`/${route}(/.*)`);
   // Route minus the trailing slash
@@ -50,9 +51,34 @@ function install(route) {
   );
 }
 
-self.addEventListener('install', event => {
-  // Allow overriding the route we use to listen for filesystem path requests.
-  // The default will be `fs` as in `/fs/{path}`.
-  const route = new URL(location).searchParams.get('route') || 'fs';
-  event.waitUntil(Promise.resolve(install(route)));
+/**
+ * Various features of the server can be configured by passing options on
+ * the query string when registering the nohost-sw.js service worker file.
+ * 
+ * `route`: `String` value with the route name to use when listening for filesystem
+ * path requests. Defaults to `fs`, such that `/fs/path/to/file` would give `/path/to/file`
+ * 
+ * `disableIndexes`: if present (i.e., `Boolean`), directory indexes will not be shown.
+ * Users will have to know the filename they wish to get back from the server.  Defaults
+ * to `true` (i.e. directory indexes are shown).
+ * 
+ * `directoryIndex`: `String` value used to override the default directory index
+ * used when a filename isn't given. Defautls to `index.html`. For example,
+ * `/fs/` would return `/fs/index.html` by default, or use another name if
+ * specified.
+ */
+
+function parseConfig(location) {
+  const url = new URL(location);
+
+  return {
+    route: url.searchParams.get('route') || 'fs',
+    disableIndexes: url.searchParams.get('disableIndexes') !== null,
+    directoryIndex: url.searchParams.get('route') || 'index.html'
+  };
+}
+
+self.addEventListener('install', function(event) {
+  const config = parseConfig(location);
+  event.waitUntil(Promise.resolve(install(config)));
 });
