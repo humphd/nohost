@@ -23,12 +23,12 @@
     "url": "https://github.com/humphd/nohost.git"
   },
   "dependencies": {
-    "filer": "^1.1.0",
+    "filer": "^1.1.2",
     "mime-types": "^2.1.21"
   },
   "devDependencies": {
     "copyfiles": "^2.1.0",
-    "eslint": "^5.11.1",
+    "eslint": "^5.13.0",
     "http-server": "^0.11.1",
     "parcel": "^1.11.0"
   }
