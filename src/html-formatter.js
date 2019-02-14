@@ -1,6 +1,6 @@
 const { isMedia, isImage, getMimeType } = require('./content-type');
 const { path } = require('filer');
-const { getDataUri } = require('../icons/icon.js');
+const { back, blank, folder, image2, movie, text, unknown } = require('../icons/icons');
 
 // 20-Apr-2004 17:14
 const formatDate = d => {
@@ -22,12 +22,13 @@ const formatSize = s => {
 };
 
 const formatRow = (
+  icon,
   alt = '[   ]',
   href,
   name,
   modified,
   size
-) => `<tr><td valign='top'><img src='${getDataUri('unknown')}' alt='${alt}'></td><td>
+) => `<tr><td valign='top'><img src='${icon || unknown}' alt='${alt}'></td><td>
       <a href='${href}'>${name}</a></td>
       <td align='right'>${formatDate(new Date(modified))}</td>
       <td align='right'>${formatSize(size)}</td><td>&nbsp;</td></tr>`;
@@ -90,11 +91,11 @@ function formatDir(route, dirPath, entries) {
     <!DOCTYPE html>
     <html><head><title>Index of ${dirPath}</title></head>
     <body><h1>Index of ${dirPath}</h1>
-    <table><tr><th><img src='${getDataUri('blank')}' alt='[ICO]'></th>
+    <table><tr><th><img src='${blank}' alt='[ICO]'></th>
     <th><b>Name</b></th><th><b>Last modified</b></th>
     <th><b>Size</b></th><th><b>Description</b></th></tr>
     <tr><th colspan='5'><hr></th></tr>
-    <tr><td valign='top'><img src='${getDataUri('back')}' alt='[DIR]'></td>
+    <tr><td valign='top'><img src='${back}' alt='[DIR]'></td>
     <td><a href='/${route}${parent}'>Parent Directory</a></td><td>&nbsp;</td>
     <td align='right'>  - </td><td>&nbsp;</td></tr>`;
   const footer = `<tr><th colspan='5'><hr></th></tr></table>${footerClose}`;
@@ -107,17 +108,17 @@ function formatDir(route, dirPath, entries) {
 
     // TODO: switch this to entry.isDirectory() if possible
     if (entry.type === 'DIRECTORY') {
-      icon = getDataUri('folder');
+      icon = folder;
       alt = '[DIR]';
     } else {
       if (isImage(ext)) {
-        icon = getDataUri('image2');
+        icon = image2;
         alt = '[IMG]';
       } else if (isMedia(ext)) {
-        icon = getDataUri('movie');
+        icon = movie;
         alt = '[MOV]';
       } else {
-        icon = getDataUri('text');
+        icon = text;
         alt = '[TXT]';
       }
     }
