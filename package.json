@@ -1,7 +1,7 @@
 {
   "name": "nohost",
   "description": "A web server in your web browser",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "keywords": [
     "web",
     "server",
