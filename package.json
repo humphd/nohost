@@ -11,25 +11,34 @@
   "homepage": "http://humphd.github.io/nohost/",
   "license": "Apache-2.0",
   "scripts": {
+    "eslint": "eslint src example",
+    "test": "npm run eslint",
     "build-example": "copyfiles -u 1 example/index* dist",
     "build-sw": "parcel build src/nohost-sw.js",
     "prebuild": "npm run build-example",
     "build": "npm run build-sw",
     "predev": "npm run build",
-    "dev": "http-server dist/"
+    "dev": "http-server dist/",
+    "release": "run.env release-it"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/humphd/nohost.git"
   },
+  "files": [
+    "dist/nohost-sw.js",
+    "dist/nohost-sw.map"
+  ],
   "dependencies": {
     "filer": "^1.1.2",
-    "mime-types": "^2.1.21"
+    "mime-types": "^2.1.22"
   },
   "devDependencies": {
     "copyfiles": "^2.1.0",
-    "eslint": "^5.13.0",
+    "eslint": "^5.14.1",
     "http-server": "^0.11.1",
-    "parcel": "^1.11.0"
+    "parcel": "^1.11.0",
+    "release-it": "^10.1.0",
+    "run.env": "^1.1.0"
   }
 }

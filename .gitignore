@@ -1,4 +1,8 @@
 *~
 node_modules
 .cache
-dist
+.env
+
+dist/*
+!dist/nohost-sw.js
+!dist/nohost-sw.map
