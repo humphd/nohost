@@ -1,13 +1,12 @@
 {
   "name": "nohost",
   "description": "A web server in your web browser",
-  "version": "0.9.9",
+  "version": "1.0.1",
   "keywords": [
     "web",
     "server",
     "files"
   ],
-  "version": "1.0.0",
   "author": "David Humphrey <david.humphrey@senecacolleage.ca> (@humphd)",
   "homepage": "http://humphd.github.io/nohost/",
   "license": "Apache-2.0",
