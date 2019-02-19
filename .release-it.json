@@ -5,7 +5,6 @@
     "changelogCommand": "git log --pretty=format:'* %s (%h)' [REV_RANGE]"
   },
   "git": {
-    "pushRepo": "git@github.com:humphd/nohost.git",
     "tagName": "v%s"
   },
   "npm": {
