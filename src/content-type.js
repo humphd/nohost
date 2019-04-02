@@ -1,4 +1,4 @@
-const mime = require('mime-types');
+const mime = require('browser-mime');
 
 function getMimeType(path) {
   return mime.lookup(path) || 'application/octet-stream';

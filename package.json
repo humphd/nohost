@@ -29,16 +29,15 @@
     "dist/nohost-sw.js",
     "dist/nohost-sw.map"
   ],
-  "dependencies": {
-    "filer": "^1.1.2",
-    "mime-types": "^2.1.22"
-  },
+  "dependencies": {},
   "devDependencies": {
+    "browser-mime": "^1.0.1",
     "copyfiles": "^2.1.0",
-    "eslint": "^5.14.1",
+    "eslint": "^5.16.0",
+    "filer": "^1.1.2",
     "http-server": "^0.11.1",
-    "parcel": "^1.11.0",
-    "release-it": "^10.1.0",
+    "parcel": "1.10.0",
+    "release-it": "^10.4.0",
     "run.env": "^1.1.0"
   }
 }
