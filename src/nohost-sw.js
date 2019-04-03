@@ -36,11 +36,11 @@ const config = (function(location) {
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/4.1.1/workbox-sw.js');
 
 workbox.setConfig({
-  debug: config.debug,
-  skipWaiting: true,
-  clientsClaim: true,
-  directoryIndex: config.directoryIndex
+  debug: config.debug
 });
+
+addEventListener('install', () => self.skipWaiting());
+addEventListener('activate', () => self.clients.claim());
 
 // This will trigger the importScripts() for workbox.strategies and its dependencies
 // See workaround in https://developers.google.com/web/tools/workbox/modules/workbox-sw#avoid_async_imports
