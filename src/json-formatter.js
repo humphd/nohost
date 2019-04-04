@@ -1,3 +1,5 @@
+'use strict';
+
 function format404(url) {
   return {
     body: `The requested URL ${url} was not found on this server.`,

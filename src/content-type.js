@@ -1,3 +1,5 @@
+'use strict';
+
 const mime = require('browser-mime');
 
 function getMimeType(path) {

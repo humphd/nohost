@@ -5,6 +5,9 @@
     </head>
     <body>
         <p>Browse filesystem at <a href="/fs">/fs</a></p>
-        <script src="./index.js"></script>    
+        <!-- Pull in Filer so we can write some files -->
+        <script src="https://unpkg.com/filer/dist/filer.min.js"></script>
+        <!-- NOTE: use of module here to use workbox-window -->
+        <script type="module" src="./index.js"></script>
     </body>
 </html>

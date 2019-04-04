@@ -1,6 +1,7 @@
 'use strict';
 
 const { fs, Path } = require('filer');
+const { route, disableIndexes, directoryIndex } = require('./config');
 const sh = new fs.Shell();
 
 // https://tools.ietf.org/html/rfc2183
@@ -10,17 +11,8 @@ function formatContentDisposition(path, stats) {
   return `attachment; filename="${filename}"; modification-date="${modified}"; size=${stats.size};`;
 }
 
-function WebServer(config) {
-  this.route = config.route;
-  this.disableIndexes = config.disableIndexes;
-  this.directoryIndex = config.directoryIndex;
-}
-WebServer.prototype.serve = function(path, formatter, download) {
-  const route = this.route;
-  const directoryIndex = this.directoryIndex;
-  const disableIndexes = this.disableIndexes;
-
-  return new Promise(function(resolve) {
+const serve = function(path, formatter, download) {
+  return new Promise((resolve) => {
     function buildResponse(responseData) {
       return new Response(responseData.body, responseData.config);
     }
@@ -100,4 +92,4 @@ WebServer.prototype.serve = function(path, formatter, download) {
   });
 };
 
-module.exports = WebServer;
+module.exports.serve = serve;
