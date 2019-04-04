@@ -89,6 +89,8 @@ function format500(path, err) {
  */
 function formatDir(route, dirPath, entries) {
   const parent = path.dirname(dirPath) || '/';
+  // Maintain path sep, but deal with things like spaces in filenames
+  const url = encodeURI(route + parent);
   const header = `
     <!DOCTYPE html>
     <html><head><title>Index of ${dirPath}</title></head>
@@ -98,13 +100,14 @@ function formatDir(route, dirPath, entries) {
     <th><b>Size</b></th><th><b>Description</b></th></tr>
     <tr><th colspan='5'><hr></th></tr>
     <tr><td valign='top'><img src='${back}' alt='[DIR]'></td>
-    <td><a href='${route}${parent}'>Parent Directory</a></td><td>&nbsp;</td>
+    <td><a href='${url}'>Parent Directory</a></td><td>&nbsp;</td>
     <td align='right'>  - </td><td>&nbsp;</td></tr>`;
   const footer = `<tr><th colspan='5'><hr></th></tr></table>${footerClose}`;
 
   const rows = entries.map(entry => {
     const ext = path.extname(entry.name);
-    const href = `${route}${path.join(dirPath, entry.name)}`;
+    // Maintain path sep, but deal with things like spaces in filenames
+    const href = encodeURI(`${route}${path.join(dirPath, entry.name)}`);
     let icon;
     let alt;
 

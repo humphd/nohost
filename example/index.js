@@ -10,7 +10,7 @@ function serverInstall() {
   console.log('Server installed for first time');
 
   const fs = window.Filer.fs;
-  fs.writeFile('/readme.txt', 'hello world!', function(err) {
+  fs.writeFile('/hello world.txt', 'hello world!', function(err) {
     if(err) console.error(err);
   });
 }

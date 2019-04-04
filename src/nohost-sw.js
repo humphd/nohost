@@ -18,7 +18,9 @@ workbox.routing.registerRoute(
   wwwRegex,
   ({ url }) => {
     // Pull the filesystem path off the url 
-    const path = url.pathname.match(wwwRegex)[1];
+    let path = url.pathname.match(wwwRegex)[1];
+    // Deal with encoding in the filename (e.g., spaces as %20)
+    path = decodeURIComponent(path);
 
     // Allow passing `?json` on URL to get back JSON vs. raw response
     const formatter =
