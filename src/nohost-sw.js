@@ -20,7 +20,7 @@ workbox.routing.registerRoute(
     // Pull the filesystem path off the url 
     let path = url.pathname.match(wwwRegex)[1];
     // Deal with encoding in the filename (e.g., spaces as %20)
-    path = decodeURIComponent(path);
+    path = decodeURI(path);
 
     // Allow passing `?json` on URL to get back JSON vs. raw response
     const formatter =
